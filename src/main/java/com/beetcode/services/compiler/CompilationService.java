@@ -6,10 +6,7 @@ import com.beetcode.services.compiler.Dtos.CompilationResponseAbstr;
 import com.beetcode.services.compiler.Dtos.CompilationResponseDto;
 import io.micronaut.runtime.http.scope.RequestScope;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -27,8 +24,8 @@ public class CompilationService {
     public CompilationResponseAbstr compile(CompilationRequestDto compilationRequestDto){
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(
-                "/bin/bash",
-                "/app/scripts/compile.sh",
+                "/bin/sh",
+                "/app/scripts/compiler-src.sh",
                 compilationRequestDto.className(),
                 compilationRequestDto.codeB64(),
                 compilationRequestDto.executionId().toString()
@@ -40,7 +37,6 @@ public class CompilationService {
         } catch (IOException e) {
             return returnError(compilationRequestDto);
         }
-
         int exitCode = 137; // sigkill exit code
 
         try {
@@ -61,7 +57,6 @@ public class CompilationService {
             generatedClassFiles = listFilesUsingFilesList(byteCodeDirPath);
         } catch (IOException e) {
             return returnError(compilationRequestDto);
-
         }
 
         Map<String, String> generatedBytecode = new HashMap<>();
@@ -82,10 +77,11 @@ public class CompilationService {
             }
 
             String classFileBytesB64 = Base64.getEncoder().encodeToString(classFileBytes);
+
             generatedBytecode.put(filename, classFileBytesB64);
         }
-
-        return new CompilationResponseDto(generatedBytecode);
+        
+        return new CompilationResponseDto(compilationRequestDto.className(), generatedBytecode);
     }
 
     private byte[] readAllBytesFromFile(String fileName) throws IOException {
