@@ -111,7 +111,9 @@ public class CompilationService {
             String errorLogFileName = String.format("/app/error-log/%s/err.log", compilationRequestDto.executionId());
             byte[] errorLogFileRaw = readAllBytesFromFile(errorLogFileName);
             if (errorLogFileRaw.length == 0) throw new IOException();
-            return new CompilationErrorDto(new String(errorLogFileRaw, StandardCharsets.UTF_8));
+            String errorLogContents = new String(errorLogFileRaw, StandardCharsets.UTF_8);
+            String errorLogContentsSanitized = errorLogContents.replace(String.format("/app/client-src/%s/", compilationRequestDto.executionId()), "");
+            return new CompilationErrorDto(errorLogContentsSanitized);
         }
         catch (IOException ex){
             return new CompilationErrorDto("Error during compilation. Log file not found. Abandoning execution.");
