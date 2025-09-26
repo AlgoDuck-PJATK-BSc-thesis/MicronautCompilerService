@@ -80,7 +80,6 @@ public class CompilationService {
 
             generatedBytecode.put(filename, classFileBytesB64);
         }
-        
         return new CompilationResponseDto(compilationRequestDto.className(), generatedBytecode);
     }
 
