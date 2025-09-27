@@ -17,11 +17,13 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @RequestScope
 public class CompilationService {
     public CompilationResponseAbstr compile(CompilationRequestDto compilationRequestDto){
+        DebugLogger.log("Compilation request received");
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(
                 "/bin/sh",
@@ -37,17 +39,17 @@ public class CompilationService {
         } catch (IOException e) {
             return returnError(compilationRequestDto);
         }
-        int exitCode = 137; // sigkill exit code
+        boolean exitCode = false;
 
         try {
-            exitCode = start.waitFor();
+            exitCode = start.waitFor(20, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
         String byteCodeDirPath = String.format("/app/client-bytecode/%s", compilationRequestDto.executionId());
 
-        if (exitCode != 0 && exitCode != 137){
+        if (!exitCode || (start.exitValue() != 0)){
             return returnError(compilationRequestDto);
         }
 
